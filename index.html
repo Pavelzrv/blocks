@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Интерактивные блоки для сайта — калькуляторы, квизы, тарифы</title>
+<meta name="description" content="Готовые интерактивные блоки для сайта: калькулятор стоимости, квиз-подбор, сравнение тарифов. Один файл, без плагинов, подгонка под ваш сайт.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F6FA;
+  --sheet:#FFFFFF;
+  --ink:#0E1524;
+  --ink-2:#3F4A5F;
+  --rule:#D5DCE8;
+  --rule-soft:#E7ECF3;
+  --accent:#2D5BFF;
+  --accent-soft:#E8EDFF;
+  --amber:#F5A524;
+  --display:"Unbounded",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:16.5px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  /* blueprint grid */
+  background-image:
+    linear-gradient(var(--rule-soft) 1px,transparent 1px),
+    linear-gradient(90deg,var(--rule-soft) 1px,transparent 1px);
+  background-size:44px 44px,44px 44px;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px;}
+
+/* ---------- eyebrow / labels ---------- */
+.eyebrow{
+  font-family:var(--mono);font-size:11.5px;font-weight:600;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--accent);
+  margin:0 0 14px;
+}
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(48px,9vw,96px) 0 clamp(32px,5vw,52px);}
+h1{
+  font-family:var(--display);font-weight:800;
+  font-size:clamp(30px,6.2vw,60px);line-height:1.02;letter-spacing:-.03em;
+  margin:0 0 20px;max-width:20ch;
+}
+h1 em{font-style:normal;color:var(--accent);}
+.lede{font-size:clamp(16px,2.2vw,19.5px);color:var(--ink-2);max-width:56ch;margin:0 0 32px;}
+
+/* signature: brand recolor control */
+.tuner{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  background:var(--sheet);border:1px solid var(--rule);border-radius:14px;
+  padding:16px 20px;box-shadow:0 2px 14px rgba(14,21,36,.05);
+}
+.tuner__text{font-size:14px;color:var(--ink-2);max-width:30ch;}
+.tuner__text b{color:var(--ink);font-weight:600;}
+.swatches{display:flex;gap:9px;flex-wrap:wrap;}
+.sw{
+  width:34px;height:34px;border-radius:9px;cursor:pointer;border:2px solid transparent;
+  box-shadow:inset 0 0 0 1px rgba(14,21,36,.12);
+  transition:transform .12s,border-color .12s;
+}
+.sw:hover{transform:translateY(-2px);}
+.sw[aria-pressed="true"]{border-color:var(--ink);}
+.sw:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
+.picker{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2);}
+.picker input{
+  width:38px;height:34px;padding:0;border:1px solid var(--rule);border-radius:9px;
+  background:none;cursor:pointer;
+}
+
+/* ---------- spec sheets ---------- */
+.sheet{
+  background:var(--sheet);border:1px solid var(--rule);border-radius:16px;
+  margin:0 0 26px;overflow:hidden;
+}
+.sheet__top{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+  padding:24px 26px 20px;border-bottom:1px dashed var(--rule);flex-wrap:wrap;
+}
+.sheet__id{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--accent);letter-spacing:.14em;margin:0 0 8px;}
+.sheet__name{font-family:var(--display);font-weight:600;font-size:clamp(19px,2.6vw,25px);letter-spacing:-.02em;margin:0 0 8px;}
+.sheet__for{font-size:14.5px;color:var(--ink-2);margin:0;max-width:52ch;}
+.tags{display:flex;gap:7px;flex-wrap:wrap;}
+.tag{
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;
+  color:var(--ink-2);background:var(--paper);border:1px solid var(--rule);
+  padding:5px 9px;border-radius:6px;white-space:nowrap;
+}
+.demo{background:#F0F2F5;padding:0;}
+.demo iframe{display:block;width:100%;border:0;height:760px;transition:height .2s;}
+.demo__hint{
+  font-family:var(--mono);font-size:11px;color:#7A879B;letter-spacing:.06em;
+  text-align:center;padding:9px 12px;background:#E9ECF2;border-top:1px solid var(--rule);
+}
+
+/* ---------- process ---------- */
+.band{padding:clamp(44px,7vw,76px) 0;}
+h2{
+  font-family:var(--display);font-weight:600;
+  font-size:clamp(22px,3.6vw,34px);letter-spacing:-.025em;margin:0 0 12px;
+}
+.band__lede{color:var(--ink-2);max-width:56ch;margin:0 0 34px;}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:s;}
+@media(max-width:760px){.steps{grid-template-columns:1fr;}}
+.step{
+  background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:22px;
+  position:relative;
+}
+.step__n{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);letter-spacing:.12em;margin:0 0 10px;}
+.step h3{font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:-.01em;margin:0 0 8px;}
+.step p{font-size:14.5px;color:var(--ink-2);margin:0;}
+
+/* ---------- price ---------- */
+.rows{border-top:1px solid var(--rule);}
+.row{
+  display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+  padding:20px 4px;border-bottom:1px solid var(--rule);flex-wrap:wrap;
+}
+.row__l{flex:1 1 300px;}
+.row__t{font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:-.01em;margin:0 0 5px;}
+.row__d{font-size:14.5px;color:var(--ink-2);margin:0;}
+.row__p{font-family:var(--mono);font-weight:600;font-size:19px;white-space:nowrap;}
+.row__p small{font-family:var(--body);font-size:13px;font-weight:400;color:var(--ink-2);}
+
+/* ---------- cta ---------- */
+.close{
+  background:var(--ink);color:#fff;border-radius:18px;
+  padding:clamp(32px,6vw,56px);margin:0 0 clamp(40px,7vw,72px);
+  display:flex;justify-content:space-between;align-items:center;gap:28px;flex-wrap:wrap;
+}
+.close h2{color:#fff;margin:0 0 10px;max-width:22ch;}
+.close p{color:#AEBAD0;font-size:15.5px;margin:0;max-width:44ch;}
+.btn{
+  display:inline-block;text-decoration:none;white-space:nowrap;
+  background:var(--accent);color:#fff;font-family:var(--body);font-weight:600;font-size:16px;
+  padding:15px 28px;border-radius:11px;transition:filter .15s,transform .06s;
+}
+.btn:hover{filter:brightness(1.1);}
+.btn:active{transform:translateY(1px);}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:3px;}
+.mark{color:var(--amber);}
+
+footer{border-top:1px solid var(--rule);padding:26px 0 46px;}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-2);}
+.foot code{font-family:var(--mono);font-size:12.5px;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*{transition:none!important;}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <p class="eyebrow">Готовые блоки · один файл · без плагинов</p>
+    <h1>Интерактивные блоки, которые <em>считают, подбирают и продают</em></h1>
+    <p class="lede">Калькулятор стоимости, квиз-подбор и сравнение тарифов. Работают на любом сайте — Tilda, WordPress, самописный. Ничего устанавливать не нужно: один файл, вставили в блок с кодом — работает.</p>
+
+    <div class="tuner">
+      <p class="tuner__text"><b>Подойдёт под ваш сайт.</b> Выберите цвет — все примеры ниже перекрасятся сразу.</p>
+      <div class="swatches" id="sw" role="group" aria-label="Цвет бренда">
+        <button class="sw" data-c="2D5BFF" style="background:#2D5BFF" aria-pressed="true" aria-label="Синий"></button>
+        <button class="sw" data-c="0F9D58" style="background:#0F9D58" aria-pressed="false" aria-label="Зелёный"></button>
+        <button class="sw" data-c="D93F3F" style="background:#D93F3F" aria-pressed="false" aria-label="Красный"></button>
+        <button class="sw" data-c="7C3AED" style="background:#7C3AED" aria-pressed="false" aria-label="Фиолетовый"></button>
+        <button class="sw" data-c="0E1524" style="background:#0E1524" aria-pressed="false" aria-label="Графитовый"></button>
+      </div>
+      <label class="picker">свой <input type="color" id="pick" value="#2D5BFF" aria-label="Выбрать свой цвет"></label>
+    </div>
+  </header>
+
+  <!-- ================= BLOCK 1 ================= -->
+  <section class="sheet">
+    <div class="sheet__top">
+      <div>
+        <p class="sheet__id">БЛОК 01</p>
+        <h2 class="sheet__name">Калькулятор стоимости</h2>
+        <p class="sheet__for">Посетитель узнаёт цену сам и не уходит искать её у конкурентов. Считает по площади, типу и опциям — с разбивкой по строкам.</p>
+      </div>
+      <div class="tags">
+        <span class="tag">ремонт</span><span class="tag">мебель</span>
+        <span class="tag">доставка</span><span class="tag">услуги</span>
+      </div>
+    </div>
+    <div class="demo">
+      <iframe src="block-calculator.html?brand=2D5BFF" title="Демонстрация: калькулятор стоимости" loading="lazy" data-demo></iframe>
+      <p class="demo__hint">↑ рабочий пример — покрутите ползунок и галочки</p>
+    </div>
+  </section>
+
+  <!-- ================= BLOCK 2 ================= -->
+  <section class="sheet">
+    <div class="sheet__top">
+      <div>
+        <p class="sheet__id">БЛОК 02</p>
+        <h2 class="sheet__name">Квиз-подбор</h2>
+        <p class="sheet__for">Вместо «напишите нам» — четыре простых вопроса. Человек вкладывается в ответы и доходит до заявки заметно чаще.</p>
+      </div>
+      <div class="tags">
+        <span class="tag">услуги</span><span class="tag">подбор товара</span>
+        <span class="tag">заявки</span>
+      </div>
+    </div>
+    <div class="demo">
+      <iframe src="block-quiz.html?brand=2D5BFF" title="Демонстрация: квиз-подбор" loading="lazy" data-demo></iframe>
+      <p class="demo__hint">↑ пройдите до конца — в финале рекомендация и кнопка заявки</p>
+    </div>
+  </section>
+
+  <!-- ================= BLOCK 3 ================= -->
+  <section class="sheet">
+    <div class="sheet__top">
+      <div>
+        <p class="sheet__id">БЛОК 03</p>
+        <h2 class="sheet__name">Сравнение тарифов</h2>
+        <p class="sheet__for">Тарифы или комплектации рядом: что входит, что нет, старая цена зачёркнута, выгода посчитана. На телефоне списки сворачиваются.</p>
+      </div>
+      <div class="tags">
+        <span class="tag">подписки</span><span class="tag">комплектации</span>
+        <span class="tag">пакеты услуг</span>
+      </div>
+    </div>
+    <div class="demo">
+      <iframe src="block-pricing.html?brand=2D5BFF" title="Демонстрация: сравнение тарифов" loading="lazy" data-demo></iframe>
+      <p class="demo__hint">↑ переключите «Месяц / Год» — цены и выгода пересчитаются</p>
+    </div>
+  </section>
+
+  <!-- ================= PROCESS ================= -->
+  <section class="band">
+    <p class="eyebrow">как это происходит</p>
+    <h2>От выбора до работающего блока — один день</h2>
+    <p class="band__lede">Вам не нужно разбираться в коде и ничего настраивать на сервере.</p>
+    <div class="steps">
+      <div class="step">
+        <p class="step__n">ШАГ 1</p>
+        <h3>Выбираете блок</h3>
+        <p>Говорите, какой нужен и что он должен считать или спрашивать. Присылаете свои цены, вопросы или тарифы.</p>
+      </div>
+      <div class="step">
+        <p class="step__n">ШАГ 2</p>
+        <h3>Подгоняю под сайт</h3>
+        <p>Ставлю ваши цвета и данные. Шрифт блок берёт с вашей страницы сам, поэтому выглядит родным.</p>
+      </div>
+      <div class="step">
+        <p class="step__n">ШАГ 3</p>
+        <h3>Вставляете и работает</h3>
+        <p>Отдаю один файл и короткую инструкцию, куда его вставить. В Tilda — блок T123, в WordPress — блок «HTML».</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PRICE ================= -->
+  <section class="band" id="price">
+    <p class="eyebrow">стоимость</p>
+    <h2>Цены</h2>
+    <p class="band__lede">Без подписок и скрытых доплат. Правки по замечаниям входят в стоимость.</p>
+    <div class="rows">
+      <div class="row">
+        <div class="row__l">
+          <p class="row__t">Готовый блок под ваш сайт</p>
+          <p class="row__d">Любой из трёх выше. Ваши цвета, ваши цены и тексты. Срок — 1 день.</p>
+        </div>
+        <p class="row__p">3 500 <small>₽</small></p>
+      </div>
+      <div class="row">
+        <div class="row__l">
+          <p class="row__t">Блок с изменённой логикой</p>
+          <p class="row__d">Другие поля, своя формула расчёта, больше шагов в квизе, отправка заявки на почту.</p>
+        </div>
+        <p class="row__p">7 000 <small>₽</small></p>
+      </div>
+      <div class="row">
+        <div class="row__l">
+          <p class="row__t">Блок с нуля под вашу задачу</p>
+          <p class="row__d">Чего нет в списке: конфигуратор, интерактивная схема, визуализация данных, симулятор процесса.</p>
+        </div>
+        <p class="row__p">от 12 000 <small>₽</small></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CLOSE ================= -->
+  <section class="close">
+    <div>
+      <h2>Покажу ваш блок <span class="mark">до оплаты</span></h2>
+      <p>Напишите, какой блок нужен и на чём сайт. Соберу пример на ваших данных — посмотрите в браузере и решите.</p>
+    </div>
+    <a class="btn" href="https://t.me/chrnshvpa" id="contact">Написать в Telegram</a>
+  </section>
+
+  <footer>
+    <div class="foot">
+      <span>Интерактивные блоки для сайтов · HTML, CSS, JavaScript без библиотек</span>
+      <span>Павел · <a href="https://t.me/chrnshvpa" style="color:var(--accent);font-weight:600;text-decoration:none;">t.me/chrnshvpa</a></span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const frames=[...document.querySelectorAll('iframe[data-demo]')];
+
+  /* --- высота демо: слушаем сообщения от блоков --- */
+  window.addEventListener('message',e=>{
+    if(!e.data || e.data.type!=='height') return;
+    const f=frames.find(fr=>fr.contentWindow===e.source);
+    if(f && e.data.value>120) f.style.height=(e.data.value+2)+'px';
+  });
+
+  /* --- перекраска всех демо разом --- */
+  function paint(hex){
+    hex=String(hex).replace('#','');
+    if(!/^[0-9a-fA-F]{6}$/.test(hex)) return;
+    frames.forEach(f=>{
+      try{ f.contentWindow.postMessage({type:'brand',value:hex},'*'); }catch(err){}
+    });
+    document.documentElement.style.setProperty('--accent','#'+hex);
+    document.documentElement.style.setProperty('--accent-soft','#'+hex+'1A');
+  }
+
+  const swWrap=document.getElementById('sw');
+  const pick=document.getElementById('pick');
+
+  swWrap.addEventListener('click',e=>{
+    const b=e.target.closest('.sw'); if(!b) return;
+    swWrap.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed',String(s===b)));
+    pick.value='#'+b.dataset.c;
+    paint(b.dataset.c);
+  });
+
+  pick.addEventListener('input',()=>{
+    swWrap.querySelectorAll('.sw').forEach(s=>s.setAttribute('aria-pressed','false'));
+    paint(pick.value);
+  });
+})();
+</script>
+</body>
+</html>

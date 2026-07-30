@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор стоимости</title>
+<style>
+/* ============================================================
+   КАЛЬКУЛЯТОР СТОИМОСТИ
+   Один файл. Без библиотек. Вставляется в HTML-блок сайта.
+   Цвет: поменяйте --brand ниже.
+   Шрифт: наследуется от вашего сайта.
+   ============================================================ */
+:root{
+  --brand:#2D5BFF;              /* ← основной цвет: поменяйте под сайт */
+  --brand-soft:#EEF2FF;
+  --ink:#111827;
+  --muted:#6B7280;
+  --line:#E5E7EB;
+  --card:#FFFFFF;
+  --bg:#F9FAFB;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+.calc{
+  font-family:inherit;           /* подхватывает шрифт сайта */
+  font-size:16px;
+  line-height:1.5;
+  color:var(--ink);
+  background:var(--bg);
+  padding:clamp(18px,4vw,32px);
+  border-radius:var(--radius);
+  max-width:920px;
+  margin:0 auto;
+}
+.calc *{font-family:inherit;}
+.calc__head{margin-bottom:22px;}
+.calc__title{font-size:clamp(20px,3vw,26px);font-weight:700;margin:0 0 6px;letter-spacing:-.01em;}
+.calc__sub{color:var(--muted);font-size:14.5px;margin:0;}
+.calc__grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+@media(max-width:760px){.calc__grid{grid-template-columns:1fr;}}
+
+.field{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:12px;}
+.field__label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;letter-spacing:.01em;}
+
+/* segmented choice */
+.seg{display:flex;flex-wrap:wrap;gap:8px;}
+.seg button{
+  flex:1 1 auto;min-width:96px;cursor:pointer;
+  padding:10px 12px;font-size:14px;font-weight:500;
+  color:var(--ink);background:#fff;
+  border:1.5px solid var(--line);border-radius:9px;
+  transition:border-color .15s,background .15s,color .15s;
+}
+.seg button:hover{border-color:#C7CDD8;}
+.seg button[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:600;}
+.seg button:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+
+/* number + range */
+.numrow{display:flex;align-items:center;gap:14px;}
+.numrow input[type=number]{
+  width:110px;padding:10px 12px;font-size:16px;font-weight:600;color:var(--ink);
+  border:1.5px solid var(--line);border-radius:9px;background:#fff;
+}
+.numrow input[type=number]:focus{outline:none;border-color:var(--brand);}
+.numrow .unit{color:var(--muted);font-size:14px;}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:4px;
+  background:var(--line);outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;
+  background:var(--brand);border:3px solid #fff;cursor:pointer;
+  box-shadow:0 1px 4px rgba(17,24,39,.25);
+}
+input[type=range]::-moz-range-thumb{
+  width:20px;height:20px;border-radius:50%;background:var(--brand);
+  border:3px solid #fff;cursor:pointer;box-shadow:0 1px 4px rgba(17,24,39,.25);
+}
+input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 4px rgba(45,91,255,.25);}
+
+/* checkboxes */
+.opts{display:grid;gap:9px;}
+.opt{display:flex;align-items:center;gap:11px;cursor:pointer;padding:9px 11px;border:1.5px solid var(--line);border-radius:9px;background:#fff;transition:border-color .15s,background .15s;}
+.opt:hover{border-color:#C7CDD8;}
+.opt input{position:absolute;opacity:0;pointer-events:none;}
+.opt .box{width:19px;height:19px;flex:none;border:1.5px solid #C7CDD8;border-radius:5px;display:grid;place-items:center;transition:all .15s;}
+.opt .box svg{width:11px;height:11px;opacity:0;transform:scale(.6);transition:all .15s;}
+.opt input:checked ~ .box{background:var(--brand);border-color:var(--brand);}
+.opt input:checked ~ .box svg{opacity:1;transform:scale(1);}
+.opt input:checked + .box + .opt__text{font-weight:600;}
+.opt:has(input:checked){border-color:var(--brand);background:var(--brand-soft);}
+.opt input:focus-visible ~ .box{outline:2px solid var(--brand);outline-offset:2px;}
+.opt__text{font-size:14.5px;flex:1;}
+.opt__price{font-size:13px;color:var(--muted);white-space:nowrap;}
+
+/* result panel */
+.result{
+  position:sticky;top:16px;
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:20px;box-shadow:0 4px 18px rgba(17,24,39,.06);
+}
+.result__label{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px;}
+.result__total{
+  font-size:clamp(28px,5vw,36px);font-weight:800;letter-spacing:-.02em;
+  color:var(--ink);margin:0 0 2px;font-variant-numeric:tabular-nums;
+}
+.result__note{font-size:12.5px;color:var(--muted);margin:0 0 16px;}
+.lines{border-top:1px dashed var(--line);padding-top:13px;margin-bottom:16px;display:grid;gap:8px;}
+.line{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;}
+.line span:first-child{color:var(--muted);}
+.line span:last-child{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.cta{
+  display:block;width:100%;text-align:center;cursor:pointer;
+  padding:14px 18px;font-size:15px;font-weight:600;
+  color:#fff;background:var(--brand);border:none;border-radius:10px;
+  text-decoration:none;transition:filter .15s,transform .06s;
+}
+.cta:hover{filter:brightness(1.08);}
+.cta:active{transform:translateY(1px);}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+.disclaimer{font-size:11.5px;color:var(--muted);margin:11px 0 0;text-align:center;line-height:1.45;}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body style="margin:0;background:#F0F2F5;padding:24px 12px;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+
+<div class="calc" id="calc">
+  <div class="calc__head">
+    <h2 class="calc__title" id="c-title">Рассчитать стоимость</h2>
+    <p class="calc__sub" id="c-sub">Ответьте на три вопроса — получите цену сразу, без звонка.</p>
+  </div>
+
+  <div class="calc__grid">
+    <div>
+      <div class="field">
+        <span class="field__label" id="lbl-type">Тип помещения</span>
+        <div class="seg" id="seg-type" role="group" aria-labelledby="lbl-type"></div>
+      </div>
+
+      <div class="field">
+        <span class="field__label" id="lbl-area">Площадь</span>
+        <div class="numrow">
+          <input type="number" id="area-num" min="1" max="500" value="45" aria-labelledby="lbl-area">
+          <span class="unit" id="area-unit">м²</span>
+          <input type="range" id="area-rng" min="10" max="200" step="1" value="45" aria-label="Площадь, ползунок">
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field__label" id="lbl-level">Уровень отделки</span>
+        <div class="seg" id="seg-level" role="group" aria-labelledby="lbl-level"></div>
+      </div>
+
+      <div class="field">
+        <span class="field__label">Дополнительно</span>
+        <div class="opts" id="opts"></div>
+      </div>
+    </div>
+
+    <aside class="result" aria-live="polite">
+      <div class="result__label">Предварительная стоимость</div>
+      <p class="result__total" id="total">—</p>
+      <p class="result__note" id="per-unit">—</p>
+      <div class="lines" id="lines"></div>
+      <a class="cta" id="cta" href="#request">Получить точный расчёт</a>
+      <p class="disclaimer" id="disc">Расчёт предварительный. Итоговая смета — после замера.</p>
+    </aside>
+  </div>
+</div>
+
+<!-- ↓ подпись демонстрации. При передаче клиенту эти 3 строки удалить. -->
+<p style="max-width:920px;margin:16px auto 0;text-align:center;font-size:13px;color:#6B7280;">
+  Блок сделал Павел · <a href="https://t.me/chrnshvpa" style="color:#2D5BFF;font-weight:600;text-decoration:none;">t.me/chrnshvpa</a>
+</p>
+
+<script>
+/* ============================================================
+   НАСТРОЙКА — меняется здесь, код ниже трогать не нужно
+   ============================================================ */
+const CONFIG = {
+  title:    "Рассчитать стоимость ремонта",
+  subtitle: "Ответьте на три вопроса — получите цену сразу, без звонка.",
+  currency: "₽",
+  unit:     "м²",
+  ctaText:  "Получить точный расчёт",
+  ctaHref:  "#request",
+  disclaimer:"Расчёт предварительный. Итоговая смета — после замера на объекте.",
+
+  areaLabel: "Площадь",
+  areaMin: 10, areaMax: 200, areaDefault: 45,
+
+  typeLabel: "Тип помещения",
+  types: [
+    { name:"Квартира",  factor:1.00 },
+    { name:"Дом",       factor:1.15 },
+    { name:"Офис",      factor:1.25 }
+  ],
+
+  levelLabel: "Уровень отделки",
+  levels: [
+    { name:"Косметический", perUnit:3500 },
+    { name:"Капитальный",   perUnit:6900 },
+    { name:"Премиум",       perUnit:11500 }
+  ],
+
+  options: [
+    { name:"Дизайн-проект",       price:1200, perUnit:true  },
+    { name:"Демонтаж старого",    price:900,  perUnit:true  },
+    { name:"Вывоз мусора",        price:18000,perUnit:false },
+    { name:"Срочные сроки (+20%)",percent:20               }
+  ]
+};
+
+/* ---------- реализация ---------- */
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const state = { type:0, level:1, area:CONFIG.areaDefault, opts:new Set() };
+
+  const fmt = n => new Intl.NumberFormat('ru-RU').format(Math.round(n)) + " " + CONFIG.currency;
+
+  // texts
+  $('c-title').textContent = CONFIG.title;
+  $('c-sub').textContent   = CONFIG.subtitle;
+  $('lbl-type').textContent  = CONFIG.typeLabel;
+  $('lbl-area').textContent  = CONFIG.areaLabel;
+  $('lbl-level').textContent = CONFIG.levelLabel;
+  $('area-unit').textContent = CONFIG.unit;
+  $('cta').textContent = CONFIG.ctaText;
+  $('cta').href = CONFIG.ctaHref;
+  $('disc').textContent = CONFIG.disclaimer;
+
+  // segmented groups
+  function buildSeg(el, items, key){
+    el.innerHTML = '';
+    items.forEach((it,i)=>{
+      const b=document.createElement('button');
+      b.type='button'; b.textContent=it.name;
+      b.setAttribute('aria-pressed', String(state[key]===i));
+      b.addEventListener('click',()=>{ state[key]=i; buildSeg(el,items,key); calc(); });
+      el.appendChild(b);
+    });
+  }
+  buildSeg($('seg-type'),  CONFIG.types,  'type');
+  buildSeg($('seg-level'), CONFIG.levels, 'level');
+
+  // area
+  const num=$('area-num'), rng=$('area-rng');
+  num.value=state.area; rng.value=state.area;
+  rng.min=CONFIG.areaMin; rng.max=CONFIG.areaMax;
+  num.addEventListener('input',()=>{ let v=+num.value||0; state.area=Math.max(1,v); rng.value=Math.min(CONFIG.areaMax,state.area); calc(); });
+  rng.addEventListener('input',()=>{ state.area=+rng.value; num.value=state.area; calc(); });
+
+  // options
+  const check='<svg viewBox="0 0 12 12" fill="none"><path d="M1.5 6.2l3 3 6-6.4" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const optsEl=$('opts');
+  CONFIG.options.forEach((o,i)=>{
+    const l=document.createElement('label'); l.className='opt';
+    let priceTxt='';
+    if(o.percent) priceTxt='+'+o.percent+'%';
+    else if(o.perUnit) priceTxt='+'+fmt(o.price)+' / '+CONFIG.unit;
+    else priceTxt='+'+fmt(o.price);
+    l.innerHTML='<input type="checkbox"><span class="box">'+check+'</span>'+
+                '<span class="opt__text">'+o.name+'</span><span class="opt__price">'+priceTxt+'</span>';
+    const inp=l.querySelector('input');
+    inp.addEventListener('change',()=>{ inp.checked?state.opts.add(i):state.opts.delete(i); calc(); });
+    optsEl.appendChild(l);
+  });
+
+  function calc(){
+    const t=CONFIG.types[state.type], lv=CONFIG.levels[state.level];
+    const base = state.area * lv.perUnit * t.factor;
+    const lines=[[lv.name+' · '+state.area+' '+CONFIG.unit, base]];
+    let sum=base, pct=0;
+
+    state.opts.forEach(i=>{
+      const o=CONFIG.options[i];
+      if(o.percent){ pct+=o.percent; return; }
+      const v = o.perUnit ? o.price*state.area : o.price;
+      sum+=v; lines.push([o.name, v]);
+    });
+    if(pct){ const v=sum*pct/100; lines.push(['Срочность +'+pct+'%', v]); sum+=v; }
+
+    $('total').textContent = fmt(sum);
+    $('per-unit').textContent = fmt(sum/state.area) + ' за ' + CONFIG.unit;
+    $('lines').innerHTML = lines.map(l=>'<div class="line"><span>'+l[0]+'</span><span>'+fmt(l[1])+'</span></div>').join('');
+    report();
+  }
+
+  /* --- цвет бренда: ?brand=2D5BFF или postMessage --- */
+  function setBrand(hex){
+    if(!/^#?[0-9a-fA-F]{6}$/.test(hex)) return;
+    hex = '#'+hex.replace('#','');
+    document.documentElement.style.setProperty('--brand',hex);
+    document.documentElement.style.setProperty('--brand-soft',hex+'14');
+  }
+  const q=new URLSearchParams(location.search).get('brand');
+  if(q) setBrand(q);
+  window.addEventListener('message',e=>{
+    if(e.data && e.data.type==='brand') setBrand(String(e.data.value));
+  });
+
+  /* --- сообщаем высоту родителю (для встраивания в iframe) --- */
+  let last=0;
+  function report(){
+    const h=document.documentElement.scrollHeight;
+    if(Math.abs(h-last)>2){ last=h; try{ parent.postMessage({type:'height',value:h},'*'); }catch(e){} }
+  }
+  window.addEventListener('load',report);
+  window.addEventListener('resize',report);
+
+  calc();
+})();
+</script>
+</body>
+</html>

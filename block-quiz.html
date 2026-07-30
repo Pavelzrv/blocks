@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квиз-подбор</title>
+<style>
+/* ============================================================
+   КВИЗ-ПОДБОР  (подбор услуги / товара / формата)
+   Один файл. Без библиотек. Вставляется в HTML-блок сайта.
+   Цвет: --brand. Шрифт: наследуется от сайта.
+   ============================================================ */
+:root{
+  --brand:#2D5BFF;
+  --brand-soft:#EEF2FF;
+  --ink:#111827;
+  --muted:#6B7280;
+  --line:#E5E7EB;
+  --card:#FFFFFF;
+  --bg:#F9FAFB;
+}
+*{box-sizing:border-box;}
+.quiz{
+  font-family:inherit;font-size:16px;line-height:1.5;color:var(--ink);
+  background:var(--bg);border-radius:14px;
+  padding:clamp(20px,4vw,34px);
+  max-width:680px;margin:0 auto;
+}
+.quiz *{font-family:inherit;}
+
+/* progress */
+.bar{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-bottom:8px;}
+.bar__fill{height:100%;background:var(--brand);border-radius:4px;width:0;transition:width .35s cubic-bezier(.4,0,.2,1);}
+.step{font-size:12.5px;color:var(--muted);font-weight:600;letter-spacing:.02em;margin-bottom:20px;}
+
+/* question */
+.q__title{font-size:clamp(19px,3.2vw,25px);font-weight:700;letter-spacing:-.01em;margin:0 0 6px;}
+.q__hint{font-size:14px;color:var(--muted);margin:0 0 20px;}
+.answers{display:grid;gap:10px;margin-bottom:20px;}
+.ans{
+  display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;
+  padding:15px 17px;font-size:15.5px;font-weight:500;color:var(--ink);
+  background:var(--card);border:1.5px solid var(--line);border-radius:11px;
+  transition:border-color .15s,background .15s,transform .06s;
+}
+.ans:hover{border-color:var(--brand);background:var(--brand-soft);}
+.ans:active{transform:translateY(1px);}
+.ans:focus-visible{outline:2px solid var(--brand);outline-offset:2px;}
+.ans__dot{width:20px;height:20px;flex:none;border:1.5px solid #C7CDD8;border-radius:50%;position:relative;transition:all .15s;}
+.ans:hover .ans__dot{border-color:var(--brand);}
+.ans:hover .ans__dot::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--brand);}
+
+/* nav */
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.back{
+  background:none;border:none;cursor:pointer;padding:8px 2px;
+  font-size:14px;font-weight:600;color:var(--muted);
+}
+.back:hover{color:var(--ink);}
+.back:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px;}
+.back[hidden]{visibility:hidden;}
+
+/* result */
+.res{text-align:left;}
+.res__badge{
+  display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--brand);background:var(--brand-soft);padding:6px 11px;border-radius:20px;margin-bottom:14px;
+}
+.res__title{font-size:clamp(21px,3.6vw,28px);font-weight:700;letter-spacing:-.015em;margin:0 0 10px;}
+.res__text{font-size:15.5px;color:#374151;margin:0 0 18px;}
+.res__list{list-style:none;padding:0;margin:0 0 22px;display:grid;gap:9px;}
+.res__list li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:#374151;}
+.res__list svg{width:17px;height:17px;flex:none;margin-top:2px;}
+.cta{
+  display:block;width:100%;text-align:center;cursor:pointer;text-decoration:none;
+  padding:15px 20px;font-size:15.5px;font-weight:600;color:#fff;
+  background:var(--brand);border:none;border-radius:11px;
+  transition:filter .15s,transform .06s;
+}
+.cta:hover{filter:brightness(1.08);}
+.cta:active{transform:translateY(1px);}
+.cta:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+.restart{
+  display:block;margin:13px auto 0;background:none;border:none;cursor:pointer;
+  font-size:13.5px;font-weight:600;color:var(--muted);
+}
+.restart:hover{color:var(--ink);}
+.restart:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px;}
+
+.fade{animation:in .3s cubic-bezier(.4,0,.2,1);}
+@keyframes in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body style="margin:0;background:#F0F2F5;padding:24px 12px;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+
+<div class="quiz" id="quiz">
+  <div id="progress">
+    <div class="bar"><div class="bar__fill" id="fill"></div></div>
+    <div class="step" id="stepLabel"></div>
+  </div>
+  <div id="stage" aria-live="polite"></div>
+</div>
+
+<!-- ↓ подпись демонстрации. При передаче клиенту эти 3 строки удалить. -->
+<p style="max-width:680px;margin:16px auto 0;text-align:center;font-size:13px;color:#6B7280;">
+  Блок сделал Павел · <a href="https://t.me/chrnshvpa" style="color:#2D5BFF;font-weight:600;text-decoration:none;">t.me/chrnshvpa</a>
+</p>
+
+<script>
+/* ============================================================
+   НАСТРОЙКА
+   Каждый вариант ответа добавляет баллы результатам (score).
+   Результат с максимальным баллом показывается в конце.
+   ============================================================ */
+const CONFIG = {
+  ctaText: "Записаться на консультацию",
+  ctaHref: "#request",
+  restartText: "Пройти заново",
+
+  questions: [
+    {
+      title: "С чем вы хотите разобраться?",
+      hint: "Это ни к чему не обязывает — просто чтобы предложить подходящее.",
+      answers: [
+        { text:"Конкретная ситуация, нужно решение", score:{single:2} },
+        { text:"Состояние, которое длится давно",    score:{long:2} },
+        { text:"Сложности в отношениях",             score:{pair:3} },
+        { text:"Хочу лучше понять себя",             score:{short:1, long:1} }
+      ]
+    },
+    {
+      title: "Сколько времени готовы уделить?",
+      answers: [
+        { text:"Одна встреча",              score:{single:3} },
+        { text:"Несколько недель",          score:{short:3} },
+        { text:"Готов к длительной работе", score:{long:3} },
+        { text:"Пока не знаю",              score:{short:1} }
+      ]
+    },
+    {
+      title: "С кем планируете работать?",
+      answers: [
+        { text:"Только я",              score:{single:1, short:1, long:1} },
+        { text:"Вместе с партнёром",    score:{pair:4} },
+        { text:"Вопрос касается семьи", score:{pair:3} }
+      ]
+    },
+    {
+      title: "Что для вас важнее всего?",
+      answers: [
+        { text:"Быстро понять, что делать",    score:{single:2} },
+        { text:"Понять причину, а не симптом", score:{long:2} },
+        { text:"Наладить отношения",           score:{pair:2} },
+        { text:"Разбираться постепенно",       score:{short:2} }
+      ]
+    }
+  ],
+
+  /* результаты: id → что показать */
+  results: {
+    pair: {
+      badge:"Подходящий формат",
+      title:"Парная работа",
+      text:"Судя по ответам, речь о отношениях — здесь эффективнее работать вдвоём.",
+      points:["Встречи 80 минут","Работа с обоими участниками","Возможны и индивидуальные сессии"]
+    },
+    single: {
+      badge:"Подходящий формат",
+      title:"Разовая консультация",
+      text:"Для вашего запроса достаточно одной встречи — разобрать ситуацию и получить план.",
+      points:["Одна встреча, 60 минут","Конкретные шаги по итогу","Продолжение — только по желанию"]
+    },
+    short: {
+      badge:"Подходящий формат",
+      title:"Короткий курс, 5–8 встреч",
+      text:"Оптимально — короткий курс с понятной целью и обозримым сроком.",
+      points:["Встречи раз в неделю","Цель формулируем на первой встрече","Итог обсуждаем в конце курса"]
+    },
+    long: {
+      badge:"Подходящий формат",
+      title:"Длительная работа",
+      text:"Вам важно разобраться в причинах — это работа не на одну встречу.",
+      points:["Регулярные встречи раз в неделю","Глубокая работа с причинами","Срок обсуждаем и пересматриваем"]
+    }
+  }
+};
+
+/* ---------- реализация ---------- */
+(function(){
+  "use strict";
+  const $=id=>document.getElementById(id);
+  const stage=$('stage'), fill=$('fill'), stepLabel=$('stepLabel'), progress=$('progress');
+  let idx=0, scores={}, history=[];
+  const total=CONFIG.questions.length;
+
+  const tick='<svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="9" fill="var(--brand)" opacity=".12"/><path d="M5 9.3l2.6 2.6L13 6.4" stroke="var(--brand)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function renderQuestion(){
+    const q=CONFIG.questions[idx];
+    progress.hidden=false;
+    fill.style.width=((idx)/total*100)+'%';
+    stepLabel.textContent='Вопрос '+(idx+1)+' из '+total;
+
+    let html='<div class="fade"><h3 class="q__title">'+q.title+'</h3>';
+    if(q.hint) html+='<p class="q__hint">'+q.hint+'</p>';
+    html+='<div class="answers">';
+    q.answers.forEach((a,i)=>{
+      html+='<button class="ans" type="button" data-i="'+i+'"><span class="ans__dot"></span><span>'+a.text+'</span></button>';
+    });
+    html+='</div><div class="nav"><button class="back" type="button" id="back"'+(idx===0?' hidden':'')+'>← Назад</button><span></span></div></div>';
+    stage.innerHTML=html;
+
+    stage.querySelectorAll('.ans').forEach(b=>{
+      b.addEventListener('click',()=>{
+        const a=q.answers[+b.dataset.i];
+        history.push(JSON.parse(JSON.stringify(scores)));
+        for(const k in a.score) scores[k]=(scores[k]||0)+a.score[k];
+        idx++;
+        idx<total ? renderQuestion() : renderResult();
+      });
+    });
+    const back=$('back');
+    if(back) back.addEventListener('click',()=>{ idx--; scores=history.pop()||{}; renderQuestion(); });
+    report();
+  }
+
+  function renderResult(){
+    fill.style.width='100%';
+    stepLabel.textContent='Готово';
+    let best=null,bv=-1;
+    for(const k in scores){ if(scores[k]>bv){bv=scores[k];best=k;} }
+    const r=CONFIG.results[best] || Object.values(CONFIG.results)[0];
+
+    stage.innerHTML='<div class="res fade">'+
+      '<span class="res__badge">'+r.badge+'</span>'+
+      '<h3 class="res__title">'+r.title+'</h3>'+
+      '<p class="res__text">'+r.text+'</p>'+
+      '<ul class="res__list">'+r.points.map(p=>'<li>'+tick+'<span>'+p+'</span></li>').join('')+'</ul>'+
+      '<a class="cta" href="'+CONFIG.ctaHref+'">'+CONFIG.ctaText+'</a>'+
+      '<button class="restart" type="button" id="restart">'+CONFIG.restartText+'</button>'+
+      '</div>';
+    $('restart').addEventListener('click',()=>{ idx=0;scores={};history=[];renderQuestion(); });
+    report();
+  }
+
+  /* --- цвет бренда --- */
+  function setBrand(hex){
+    if(!/^#?[0-9a-fA-F]{6}$/.test(hex))return;
+    hex='#'+hex.replace('#','');
+    document.documentElement.style.setProperty('--brand',hex);
+    document.documentElement.style.setProperty('--brand-soft',hex+'14');
+  }
+  const q0=new URLSearchParams(location.search).get('brand');
+  if(q0) setBrand(q0);
+  window.addEventListener('message',e=>{ if(e.data&&e.data.type==='brand') setBrand(String(e.data.value)); });
+
+  /* --- высота для iframe --- */
+  let last=0;
+  function report(){
+    const h=document.documentElement.scrollHeight;
+    if(Math.abs(h-last)>2){ last=h; try{parent.postMessage({type:'height',value:h},'*');}catch(e){} }
+  }
+  window.addEventListener('load',report);
+  window.addEventListener('resize',report);
+
+  renderQuestion();
+})();
+</script>
+</body>
+</html>
